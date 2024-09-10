@@ -1,6 +1,7 @@
 'use strict'
 
-import { csvParse, csvFormat } from 'https://cdn.jsdelivr.net/npm/d3-dsv@3/+esm'
+//import { csvParse, csvFormat } from 'https://cdn.jsdelivr.net/npm/d3-dsv@3/+esm'
+import { csvParse, csvFormat } from 'd3-dsv';
 
 class LocalStorageTable {
 
