@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang='es'>
+
+<head>
+   <meta charset='UTF-8'>
+   <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+
+   <!-- <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css'> -->
+
+   <link rel="manifest" href="/assets/manifest-ChHpiYP1.json" />
+   <link rel="icon" href="/assets/favicon-CPrLTsM0.png" />
+
+
+   <title>Registro JAAP</title>
+  <script type="module" crossorigin src="/assets/index-DM3MdaBD.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BB4AHHkc.css">
+</head>
+
+<body>
+
+   <header>
+      <h1>Registro de la Junta Administradora de Agua Potable</h1>
+      <img src="/assets/favicon-CPrLTsM0.png" alt="JAAP logo" style="max-width:8vw; padding-top: 1%;">
+   </header>
+
+   <nav>
+      <div>
+
+         <input type='button' value='medidores' id='meters-section' class='active-section'>
+         <input type='button' value='tarifas' id='fees-section'>
+         <input type='button' value='csv' id='csv-section'>
+         <input type='button' value='ayuda' id='help-section'>
+         <div class='filler-tab'></div>
+      </div>
+
+      <search id='meter-search'>
+
+         <div>
+            <label for='history'>Tabla</label>
+            <select id='history'></select>
+         </div>
+
+         <div>
+            <span style='padding: 0.3rem 0.4rem;'>medidores:</span>
+            <span id='total-medidores'></span>
+         </div>
+
+         <div>
+            <label for='meter-filter'>Filtrar</label>
+            <input id='meter-filter' type='search' spellcheck='false' size='18'>
+         </div>
+
+         <input type='button' id='meter-add-btn' value='+ medidor'>
+         <input type='button' id='reading-btn' value='&check; lectura'>
+         <input type='button' value='&#128424; imprimir' id='print-all-btn'>
+         <input type='button' value='&#8628; .csv' id='export-meters-csv'>
+         <input type='button' value='&#8628; .json' id='export-meters-json'>
+
+         <div class='switch-box' id='meters-switches'></div>
+
+      </search>
+
+      <search id='fees-search' hidden>
+
+         <input type='button' value='&#8628; .csv' id='export-fees-csv'>
+         <input type='button' value='&#8628; .json' id='export-fees-json'>
+
+      </search>
+
+      <search id='csv-search' hidden>
+
+         <label for='csv-btn'>abrir .csv</label>
+         <input type='file' id='csv-btn' accept='.csv' hidden>
+
+         <div>
+            <label for='csv-filter'>Filtrar</label>
+            <input id='csv-filter' type='search' spellcheck='false' size='18' disabled>
+         </div>
+
+         <div class='switch-box' id='csv-switches'></div>
+
+      </search>
+
+      <search id='help-search' hidden>
+         <div>
+            <p>n° del 1er recibo: <span id='num-first-receipt'></span></p>
+            <input type='button' id='set-receipt-btn' value='cambiar'>
+            <p>siguiente n° de recibo: <span id='num-next-receipt'></span></p>
+         </div>
+
+      </search>
+
+   </nav>
+
+   <!-- Meter-registration dialogs: -->
+
+   <!-- For registering a new meter: -->
+
+   <dialog>
+      <form method='dialog' id='meter-form'>
+         <label for='medidor' class='form-label'>medidor</label>
+         <input id='medidor' class='form-control' type='number' required placeholder='020318' name='medidor'>
+
+         <label for='zona' class='form-label'>zona</label>
+         <input id='zona' class='form-control' type='number' required min='1' max='14' placeholder='7' name='zona'>
+
+         <label for='titular' class='form-label'>titular</label>
+         <input id='titular' class='form-control' type='text' required placeholder='José María López Rivera'
+            name='titular'>
+
+         <label for='caserío' class='form-label'>caserío</label>
+         <input id='caserío' class='form-control' type='text' required placeholder='La Profética' name='caserío'
+            list='suggested-caseríos'>
+
+         <datalist for='caserío' id='suggested-caseríos'></datalist>
+
+         <label for='lectura-inicial' class='form-label'>lectura inicial</label>
+         <input id='lectura-inicial' class='form-control' type='number' required min='0' value='0'
+            name='lectura_anterior'>
+
+         <label for='fecha-inicial' class='form-label'>fecha de lectura inicial</label>
+         <input id='fecha-inicial' class='form-control' type='date' required name='desde'>
+
+         <!-- <label for='deuda' class='form-label'>Deuda</label>
+         <input id='deuda' class='form-control' type='number' required min='0' step='0.01' value='0'> -->
+
+         <input type='submit' value='Agregar'>
+         <input type='button' value='Cancelar' onclick='this.parentElement.parentElement.close()'>
+      </form>
+   </dialog>
+
+   <!-- To confirm the new meter has been successfully added: -->
+
+   <dialog>
+      <form method='dialog' id='meter-added-form'>
+         <p>Medidor agregado exitosamente!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Error dialog when the user tries to register a meter already registered: -->
+
+   <dialog>
+      <form method='dialog' id='meter-error-form'>
+         <p>Error: El medidor <span id='meter-repeated'></span> ya existe!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Meter-reading dialogs: -->
+
+   <!-- For adding a new meter reading: -->
+
+   <dialog>
+      <form method='dialog' id='reading-form'>
+         <label for='meter-being-read'>Medidor</label>
+         <input id='meter-being-read' type='number' required name='medidor' list='suggested-meters'>
+
+         <datalist for='meter-being-read' id='suggested-meters'></datalist>
+
+         <label for='meter-reading'>Lectura</label>
+         <input id='meter-reading' type='number' required name='lectura_actual'>
+
+         <label for='fecha-lectura-actual' class='form-label'>fecha de lectura</label>
+         <input id='fecha-lectura-actual' class='form-control' type='date' required name='hasta'>
+
+         <input type='submit' value='OK'>
+         <input type='button' value='Cancelar' onclick='this.parentElement.parentElement.close()'>
+      </form>
+   </dialog>
+
+   <!-- To confirm that the meter reading has been successfully registered: -->
+
+   <dialog>
+      <form method='dialog' id='read-confirm-form'>
+         <p>Lectura tomada exitosamente!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Error when the user tries to add a reading for a meter that doesn't exist: -->
+
+   <dialog>
+      <form method='dialog' id='meter-non-existant-form'>
+         <p>El medidor <span id='non-existant-meter'></span> aún no está registrado!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Error when the user attempts to create a new period table by reading a meter that was already read this period, while still having other unread meters this period: -->
+
+   <dialog>
+      <form method='dialog' id='meter-already-read-form'>
+         <p>No se puede registrar una nueva lectura para el medidor <span class='already-read-meter'></span>, porque eso
+            crearía una nueva tabla para un nuevo periodo, siendo que aún quedan medidores sin leer en este periodo.</p>
+         <p>Para registrar una nueva lectura para el medidor <span class='already-read-meter'></span>, tiene 2 opciones:
+         </p>
+         <p>1- Registrar una lectura para los medidores que faltan (puede poner la misma lectura del periodo anterior).
+         </p>
+         <p>2- Borrar los medidores no leídos de la tabla actual.</p>
+         <p>Si borra los medidores no leídos, estos no aparecerán en la tabla del siguiente periodo, y si necesita
+            leerlos en el futuro, tendrá que volver a registrarlos.</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Error: "desde" debe ser menor que "hasta". -->
+   <dialog>
+      <form method='dialog' id='err-desde-hasta'>
+         <p>Error: La nueva lectura debe ser realizada al menos 1 día después que la anterior!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Error: "lectura anterior" no debe ser mayor que "lectura actual". -->
+   <!-- TODO: ¿Qué pasa cuando se resetea un medidor? Respuesta: El usuario debe editar la fila -->
+   <dialog>
+      <form method='dialog' id='err-lecturas'>
+         <p>Error: La nueva lectura no puede ser menor que la anterior!</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- Elegir el n° del 1er recibo: -->
+
+   <dialog>
+      <form method='dialog' id='num-recibo'>
+         <p>Antes de registrar el 1er medidor, elija el n° del 1er recibo, y asegúrese de que sea el correcto, porque
+            después de
+            tomar la 1a lectura (con el botón <span
+               style='border: 1px solid black; border-radius: 3px; padding: 0.3rem 0.7rem'>+
+               lectura</span>), ya no podrá
+            cambiarlo!</p>
+         <div>
+            <div>
+               <label for='first_receipt'>n° del 1er recibo:</label>
+               <input id='first_receipt' type='number' min='0' name='first_receipt' required>
+            </div>
+            <div>
+               <input type='submit' value='Confirmar'>
+               <input type='button' value='Cancelar' onclick='this.closest("dialog").close()'>
+            </div>
+         </div>
+         <p>Nota: Mientras aún no tome la 1a lectura, puede cambiar el n° del 1er recibo en la sección de ayuda.</p>
+      </form>
+   </dialog>
+
+   <!-- Error: El n° del 1er recibo ya no puede cambiarse.  -->
+
+   <dialog>
+      <form method='dialog' id='err-num-recibo'>
+         <p>Error: Ya no puede cambiar el n° del 1er recibo!</p>
+         <p>Solo podía cambiarlo antes de registrar la 1a "lectura actual".</p>
+         <p>Si necesita cambiar el n° del 1er recibo, póngase en contacto con el desarrollador de esta aplicación.</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <dialog>
+      <form method='dialog' id='print-edit-dialog'>
+
+      </form>
+   </dialog>
+
+   <dialog>
+      <form method='dialog' id='cell-options'>
+         <p>celda: <span></span></p>
+         <p></p>
+         <!-- <button id='test'><img id='testimg' src='./icons/content_copy_24dp.png'><span>copiar celda</span></button> -->
+         <button id='test2'>copiar celda</button>
+         <input type='submit' name='copy-cell' value='copiar celda'>
+         <input type='submit' name='edit-cell' value='editar celda'>
+         <input type='submit' name='copy-row' value='copiar fila'>
+         <input type='submit' name='delete-cell' value='borrar fila'>
+         <input type='submit' name='print-cell' value='imprimir recibo'>
+         <input type='button' value='Cancelar' onclick='this.closest("dialog").close()'>
+
+      </form>
+   </dialog>
+
+   <dialog>
+      <form method='dialog' id='no-print-f'>
+         <p>Error: No puede imprimir los recibos de este periodo hasta que todos los medidores hayan sido leídos</p>
+         <input type='submit' value='OK'>
+      </form>
+   </dialog>
+
+   <!-- todo: error prioridad 1-> usuario debe confirmar que "medida anterior" sea igual a "lectura actual" -->
+
+   <!-- todo: error prioridad 2-> "desde" no debe ser mayor que hoy -->
+   <!-- todo: error prioridad 2-> "hasta" no debe ser mayor que hoy -->
+
+
+   <main>
+      <table id='meters-table'></table>
+      <table id='fees-table' hidden></table>
+      <table id='csv-table' hidden></table>
+      <article id='user-guide' hidden></article>
+   </main>
+
+   <aside id='receipts'></aside>
+
+   <template id='receipt-template'>
+
+      <section class='receipt-template'>
+         <div class='sec-A'>
+            <div>
+               <img src='/assets/favicon-CPrLTsM0.png' height='133' width='133'>
+            </div>
+
+            <div class='sec-header'>
+               <div class='receipt-title'>Junta Administradora de Agua Potable</div>
+               <div class='nowrap-whitespace'>Asociación de Desarrollo Comunal "El Buen Progreso"<br>del
+                  Cantón
+                  Corral Viejo, Tenancingo,<br>
+                  Cuscatlán, El Salvador, C.A.
+               </div>
+               <div class='underline-field'>
+                  <div>Nombre:&nbsp;</div>
+                  <div class='underline' data-field='nombre'>José Ricardo Pichinte</div>
+               </div>
+               <div class='underline-field'>
+                  <div>Caserio:&nbsp;</div>
+                  <div class="underline" data-field='caserio'>La Profética</div>
+               </div>
+            </div>
+
+            <div class='sec-medidor-recibo'>
+               <div class='sec-recibo'>
+                  <div>RECIBO</div>
+                  <div>N°&nbsp;<span data-field='recibo'>1987915987</span></div>
+               </div>
+               <div class='sec-medidor'>
+                  <div>MEDIDOR</div>
+                  <div data-field='medidor'>020318</div>
+                  <div>ZONA</div>
+                  <div data-field='zona'>9</div>
+               </div>
+            </div>
+         </div>
+
+         <div class='sec-B'>
+            <div class='sec-consumo'>
+               <div>lectura actual</div>
+               <div>lectura anterior</div>
+               <div>consumo m<sup>3</sup></div>
+               <div data-field='lectura_actual'>266</div>
+               <div data-field='lectura_anterior'>262</div>
+               <div data-field='consumo'>4</div>
+            </div>
+            <div class='sec-servicio'>
+               <div>servicio</div>
+               <div>desde</div>
+               <div>hasta</div>
+               <div>cubre</div>
+               <div data-field='desde'>22-10-23</div>
+               <div data-field='hasta'>22-11-23</div>
+               <div data-field='cubre'>30</div>
+            </div>
+         </div>
+
+         <div class='sec-C'>
+            <div>código</div>
+            <div>concepto facturado</div>
+            <div>importe en dólares</div>
+
+            <div>01</div>
+            <div>cargo por consumo de agua</div>
+            <div>$ <span data-field='cargo'>2.61</span></div>
+
+            <div>02</div>
+            <div>deuda pendiente</div>
+            <div>$</div>
+
+            <div>03</div>
+            <div>multa</div>
+            <div>$</div>
+
+            <div>04</div>
+            <div>otros</div>
+            <div>$</div>
+
+            <div>05</div>
+            <div><span>subsidios o compensaciones</span><span>menos</span></div>
+            <div>$</div>
+
+            <div>fecha de pago</div>
+            <div data-field='fechas-de-pago'></div>
+            <div>total a pagar</div>
+            <div>$</div>
+            <div>
+               <div>* Recuerde, después de vencido pagará $ <span data-field='multa'>1.15</span>&nbsp;de multa.</div>
+               <div>* Horario de pago:&nbsp;<span data-field='horario-de-pago'>8:00 A.M. a 4:00 P.M.</span></div>
+            </div>
+         </div>
+      </section>
+
+   </template>
+
+</body>
+
+</html>
